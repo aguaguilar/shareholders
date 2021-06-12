@@ -5,6 +5,7 @@ services:
     image: postgres
     volumes:
       - ./data/db:/var/lib/postgresql/data
+      - ./db/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -17,6 +18,11 @@ services:
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=30
       - WAIT_HOST_CONNECT_TIMEOUT=30
+      - DB_NAME=shareholders
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
     volumes:
       - .:/code
     ports:
@@ -32,7 +38,12 @@ services:
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=30
       - WAIT_HOST_CONNECT_TIMEOUT=30
-    volumes:
+      - DB_NAME=shareholders
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+  volumes:
       - .:/code
     depends_on:
       - db

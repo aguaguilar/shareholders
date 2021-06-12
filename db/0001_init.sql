@@ -1,0 +1,1 @@
+CREATE DATABASE shareholders OWNER 'postgres';
