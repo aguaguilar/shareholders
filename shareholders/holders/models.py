@@ -2,17 +2,17 @@ from django.db import models
 from django.db.models import Q
 
 
-class Entity:
+class Person(models.Model):
     name = models.CharField(max_length=255, null=False, blank=False)
     postal_code = models.CharField(max_length=20)
     country = models.CharField(max_length=255)
-
-
-class Person(Entity, models.Model):
     birth_date = models.DateField()
 
 
-class Organization(Entity, models.Model):
+class Organization(models.Model):
+    name = models.CharField(max_length=255, null=False, blank=False)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=255)
     orgnr = models.IntegerField(primary_key=True)
 
 
@@ -25,12 +25,14 @@ class Share(models.Model):
     organization_owner = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        related_name="organization_owned_shares"
+        related_name="organization_owned_shares",
+        null=True,
     )
     person_owner = models.ForeignKey(
         Person,
         on_delete=models.CASCADE,
-        related_name="person_owned_shares"
+        related_name="person_owned_shares",
+        null=True,
     )
     organization_owned = models.ForeignKey(
         Organization,
