@@ -1,6 +1,17 @@
 version: "3.3"
 
 services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=user
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
   psql:
     image: postgres
     volumes:
@@ -23,7 +34,7 @@ services:
     build: .
     command: sh -c "/wait && cd shareholders && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     environment:
-      - WAIT_HOSTS=psql:5432,mongo:27017
+      - WAIT_HOSTS=psql:5432,mongo:27017,rabbitmq:5672,rabbitmq:15672
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=30
       - WAIT_HOST_CONNECT_TIMEOUT=30
@@ -37,6 +48,10 @@ services:
       - MONGO_USER=root
       - MONGO_PASSWORD=root
       - MONGO_DB=shareholders
+      - AMQP_HOST=rabbitmq
+      - WRITE_READ_ONLY_ASYNC=True
+      - RABBITMQ_USER=user
+      - RABBITMQ_PASSWORD=user
       - SECRET_KEY=mysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkey
     volumes:
       - .:/code
@@ -45,6 +60,36 @@ services:
     depends_on:
       - psql
       - mongo
+      - rabbitmq
+  listener:
+    build: .
+    command: sh -c "/wait && cd shareholders && python manage.py migrate && python manage.py save_read_only_db"
+    environment:
+      - WAIT_HOSTS=psql:5432,mongo:27017,rabbitmq:5672,rabbitmq:15672
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=30
+      - WAIT_HOST_CONNECT_TIMEOUT=30
+      - DB_NAME=shareholders
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=psql
+      - DB_PORT=5432
+      - MONGO_HOST=mongo
+      - MONGO_PORT=27017
+      - MONGO_USER=root
+      - MONGO_PASSWORD=root
+      - MONGO_DB=shareholders
+      - AMQP_HOST=rabbitmq
+      - WRITE_READ_ONLY_ASYNC=True
+      - RABBITMQ_USER=user
+      - RABBITMQ_PASSWORD=user
+      - SECRET_KEY=mysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkey
+    volumes:
+      - .:/code
+    depends_on:
+      - psql
+      - mongo
+      - rabbitmq
   test:
     build: .
     command: sh -c "/wait && cd shareholders && python manage.py migrate && flake8 && coverage run --source='./holders' manage.py test holders.tests && coverage report"
