@@ -35,15 +35,53 @@ class Migration(migrations.Migration):
             name='Share',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('share_class', models.CharField(choices=[('A-aksjer', 'A-aksjer'), ('B-aksje', 'B-aksje')], max_length=8)),
+                (
+                    'share_class',
+                    models.CharField(
+                        choices=[('A-aksjer', 'A-aksjer'), ('B-aksje', 'B-aksje')],
+                        max_length=8
+                    )
+                ),
                 ('amount', models.IntegerField(default=0)),
-                ('organization_owned', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='owner_shares', to='holders.organization')),
-                ('organization_owner', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='organization_owned_shares', to='holders.organization')),
-                ('person_owner', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='person_owned_shares', to='holders.person')),
+                (
+                    'organization_owned',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='owner_shares',
+                        to='holders.organization'
+                    )
+                ),
+                (
+                    'organization_owner',
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='organization_owned_shares',
+                        to='holders.organization'
+                    )
+                ),
+                (
+                    'person_owner',
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='person_owned_shares',
+                        to='holders.person'
+                    )
+                ),
             ],
         ),
         migrations.AddConstraint(
             model_name='share',
-            constraint=models.CheckConstraint(check=models.Q(models.Q(('organization_owner__isnull', False), ('person_owner__isnull', True)), models.Q(('organization_owner__isnull', True), ('person_owner__isnull', False)), _connector='OR'), name='only_one_kind_of_owner'),
+            constraint=models.CheckConstraint(
+                check=models.Q(
+                    models.Q(
+                        ('organization_owner__isnull', False), ('person_owner__isnull', True)
+                    ),
+                    models.Q(
+                        ('organization_owner__isnull', True), ('person_owner__isnull', False)
+                    ), _connector='OR'),
+                name='only_one_kind_of_owner'
+            ),
         ),
     ]
