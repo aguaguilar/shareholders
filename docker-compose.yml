@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  db:
+  psql:
     image: postgres
     volumes:
       - ./data/db:/var/lib/postgresql/data
@@ -10,40 +10,62 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: shareholders
   web:
     build: .
-    command: sh -c "/wait && cd shareholders && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "/wait && cd shareholders && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     environment:
-      - WAIT_HOSTS=db:5432
+      - WAIT_HOSTS=psql:5432,mongo:27017
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=30
       - WAIT_HOST_CONNECT_TIMEOUT=30
       - DB_NAME=shareholders
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_HOST=db
+      - DB_HOST=psql
       - DB_PORT=5432
+      - MONGO_HOST=mongo
+      - MONGO_PORT=27017
+      - MONGO_USER=root
+      - MONGO_PASSWORD=root
+      - MONGO_DB=shareholders
+      - SECRET_KEY=mysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkey
     volumes:
       - .:/code
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - psql
+      - mongo
   test:
     build: .
-    # command: sh -c "/wait && cd shareholders && python manage.py runserver 0.0.0.0:8000"
-    command: sh -c "/wait && cd shareholders && python manage.py makemigrations && python manage.py migrate && python manage.py test"
+    command: sh -c "/wait && cd shareholders && python manage.py migrate && flake8 && coverage run --source='./holders' manage.py test holders.tests && coverage report"
     environment:
-      - WAIT_HOSTS=db:5432
+      - WAIT_HOSTS=psql:5432,mongo:27017
       - WAIT_HOSTS_TIMEOUT=300
       - WAIT_SLEEP_INTERVAL=30
       - WAIT_HOST_CONNECT_TIMEOUT=30
       - DB_NAME=shareholders
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_HOST=db
+      - DB_HOST=psql
       - DB_PORT=5432
-  volumes:
+      - MONGO_HOST=mongo
+      - MONGO_PORT=27017
+      - MONGO_USER=root
+      - MONGO_PASSWORD=root
+      - MONGO_DB=shareholders
+      - SECRET_KEY=mysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkeymysecuresecretkey
+    volumes:
       - .:/code
     depends_on:
-      - db
+      - psql
+      - mongo
